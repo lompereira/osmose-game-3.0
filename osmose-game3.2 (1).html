@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🧬 Osmose 3.2</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07101f; --surface:#0e1a2e; --surface2:#162035; --border:#1c2d46;
+  --accent:#00cfff; --accent2:#ff6b35; --accent3:#4dff91;
+  --warn:#ff3d5a; --gold:#ffd700; --text:#ddeeff; --muted:#4a6a80;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:'Syne',sans-serif;
+  background:var(--bg); color:var(--text);
+  min-height:100vh; display:flex; flex-direction:column; align-items:center;
+  overflow-x:hidden;
+}
+body::before{
+  content:''; position:fixed; inset:0;
+  background-image:linear-gradient(rgba(0,207,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,207,255,0.03) 1px,transparent 1px);
+  background-size:36px 36px; pointer-events:none; z-index:0;
+}
+.wrapper{
+  position:relative; z-index:1;
+  width:100%; max-width:520px; padding:10px;
+  display:flex; flex-direction:column; gap:9px;
+}
+
+/* ============ HEADER ============ */
+.header{text-align:center;padding:10px 0 2px;}
+.header h1{
+  font-family:'Space Mono',monospace; font-size:1.4rem; font-weight:700;
+  letter-spacing:4px; text-transform:uppercase;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.header .sub{font-size:0.62rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+
+/* ============ TOPBAR ============ */
+.topbar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 8px;text-align:center;}
+.stat-card .label{font-size:0.5rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.stat-card .value{font-family:'Space Mono',monospace;font-size:1.15rem;font-weight:700;line-height:1.2;}
+.stat-card.score .value{color:var(--gold);}
+.stat-card.phase .value{color:var(--accent);}
+
+/* ============ PHASE BANNER ============ */
+.phase-banner{background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:10px;padding:7px 12px;display:flex;align-items:center;gap:8px;}
+.phase-badge{background:var(--accent);color:var(--bg);font-family:'Space Mono',monospace;font-size:0.6rem;font-weight:700;padding:3px 7px;border-radius:20px;white-space:nowrap;}
+.phase-title{font-size:0.78rem;font-weight:700;color:var(--accent);letter-spacing:1px;}
+.phase-desc{font-size:0.6rem;color:var(--muted);flex:1;text-align:right;}
+
+/* ============ TIMER ============ */
+.timer-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 10px;display:flex;align-items:center;gap:8px;}
+.timer-label{font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+.timer-track{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+.timer-fill{height:100%;border-radius:4px;transition:width 0.8s linear,background 0.5s;}
+.timer-fill.urgent{animation:pulsebar 0.5s infinite alternate;}
+@keyframes pulsebar{from{opacity:1}to{opacity:0.55}}
+.timer-num{font-family:'Space Mono',monospace;font-size:0.82rem;font-weight:700;min-width:26px;text-align:right;}
+
+/* ============ ARENA ============ */
+.arena{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px;position:relative;overflow:hidden;}
+#sceneCanvas{width:100%;display:block;border-radius:8px;}
+.conc-section{margin-top:8px;}
+.conc-label{font-size:0.52rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:5px;}
+.conc-bars{display:flex;gap:8px;align-items:flex-end;justify-content:center;height:46px;}
+.bar-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;max-width:80px;}
+.bar-track{width:100%;height:36px;background:var(--border);border-radius:4px;overflow:hidden;display:flex;align-items:flex-end;}
+.bar-fill{width:100%;border-radius:4px;transition:height 0.4s ease;min-height:2px;}
+.bar-fill.a{background:linear-gradient(to top,#0044cc,var(--accent));}
+.bar-fill.b{background:linear-gradient(to top,#cc2200,var(--accent2));}
+.bar-val{font-family:'Space Mono',monospace;font-size:0.58rem;color:var(--muted);}
+.bar-mid{font-size:0.55rem;color:var(--muted);align-self:center;text-align:center;min-width:30px;line-height:1.4;}
+
+/* Equilibrium indicator */
+.equil-indicator{
+  text-align:center; padding:4px 0; font-size:0.7rem; font-weight:700;
+  letter-spacing:1px; transition:all 0.4s;
+}
+.equil-indicator.far   {color:var(--muted);}
+.equil-indicator.close {color:var(--gold);animation:glowpulse 1s infinite alternate;}
+.equil-indicator.done  {color:var(--accent3);}
+@keyframes glowpulse{from{text-shadow:none}to{text-shadow:0 0 10px currentColor}}
+
+/* ============ PASSIVE LABEL ============ */
+.passive-label{text-align:center;font-size:0.62rem;color:var(--muted);letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;}
+.passive-label span.tag{background:rgba(0,207,255,0.1);border:1px solid rgba(0,207,255,0.2);color:var(--accent);font-size:0.52rem;padding:2px 7px;border-radius:20px;letter-spacing:1px;}
+
+/* ============ FEEDBACK ============ */
+.feedback{text-align:center;font-size:0.72rem;font-weight:600;min-height:20px;transition:all 0.4s;letter-spacing:0.5px;padding:2px 4px;border-radius:6px;}
+.feedback.good{color:var(--accent3);}
+.feedback.bad{color:var(--warn);}
+.feedback.info{color:var(--accent);}
+.feedback.warn{color:var(--gold);}
+
+/* ============ CONTROLS ============ */
+.solute-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.solute-panel{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;}
+.solute-panel .cell-name{font-size:0.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;}
+.solute-panel .solute-count{font-family:'Space Mono',monospace;font-size:1.15rem;font-weight:700;}
+.solute-panel.a .solute-count{color:var(--accent);}
+.solute-panel.b .solute-count{color:var(--accent2);}
+.solute-panel .solute-label{font-size:0.52rem;color:var(--muted);}
+.solute-btns{display:flex;gap:6px;width:100%;}
+.sol-btn{
+  flex:1; font-family:'Syne',sans-serif; font-size:0.82rem; font-weight:700;
+  padding:10px 4px; border-radius:9px; border:none; cursor:pointer;
+  transition:all 0.15s; letter-spacing:0.5px;
+  display:flex; align-items:center; justify-content:center; gap:3px;
+  user-select:none; -webkit-tap-highlight-color:transparent;
+}
+.sol-btn:active{transform:scale(0.93);}
+.sol-btn:disabled{opacity:0.25;cursor:not-allowed;}
+.sol-btn.add{background:linear-gradient(135deg,#003366,#0055bb);color:#fff;border:1px solid rgba(0,200,255,0.25);box-shadow:0 2px 12px rgba(0,80,200,0.2);}
+.sol-btn.add.b{background:linear-gradient(135deg,#4a0d00,#bb2200);border:1px solid rgba(255,100,50,0.25);box-shadow:0 2px 12px rgba(180,40,0,0.2);}
+.sol-btn.remove{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.sol-btn.remove:hover{border-color:var(--warn);color:var(--warn);}
+.sol-btn.pulse{animation:btnpulse 0.3s ease;}
+@keyframes btnpulse{0%{transform:scale(1)}50%{transform:scale(1.09)}100%{transform:scale(1)}}
+
+/* highlight ring for tutorial */
+.sol-btn.highlight{box-shadow:0 0 0 3px var(--gold),0 0 20px var(--gold);animation:highlightring 0.8s infinite alternate;}
+@keyframes highlightring{from{box-shadow:0 0 0 2px var(--gold),0 0 10px var(--gold)}to{box-shadow:0 0 0 4px var(--gold),0 0 24px var(--gold)}}
+
+.move-row{display:flex;justify-content:space-between;align-items:center;padding:1px 4px;}
+.move-info{font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--muted);}
+
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.btn-outline{font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;padding:10px 8px;border-radius:9px;background:transparent;color:var(--muted);border:1px solid var(--border);cursor:pointer;transition:all 0.15s;}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+
+.progress-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;}
+.progress-label{display:flex;justify-content:space-between;font-size:0.58rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.progress-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent2),var(--gold));transition:width 0.5s ease;}
+
+/* ============================================================ */
+/* TUTORIAL OVERLAY                                            */
+/* ============================================================ */
+#tutorialOverlay{
+  position:fixed; inset:0; z-index:200;
+  background:rgba(7,16,31,0.97);
+  display:flex; align-items:flex-start; justify-content:center;
+  overflow-y:auto; padding:16px 12px 30px;
+  opacity:0; pointer-events:none; transition:opacity 0.35s;
+}
+#tutorialOverlay.show{opacity:1;pointer-events:all;}
+
+.tut-box{
+  width:100%; max-width:480px;
+  display:flex; flex-direction:column; gap:0;
+}
+
+/* Step dots */
+.tut-dots{
+  display:flex; justify-content:center; gap:7px; margin-bottom:18px; margin-top:6px;
+}
+.tut-dot{
+  width:8px; height:8px; border-radius:50%;
+  background:var(--border); transition:all 0.3s;
+}
+.tut-dot.active{background:var(--accent); box-shadow:0 0 8px var(--accent);}
+.tut-dot.done{background:var(--accent3);}
+
+/* Each step card */
+.tut-step{
+  display:none; flex-direction:column; gap:14px;
+  animation:stepIn 0.35s ease;
+}
+.tut-step.active{display:flex;}
+@keyframes stepIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}
+
+.tut-icon{font-size:3rem;text-align:center;line-height:1;margin-top:4px;}
+.tut-title{
+  font-family:'Space Mono',monospace; font-size:1.1rem; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; text-align:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.tut-sub{font-size:0.75rem;color:var(--muted);text-align:center;line-height:1.6;}
+
+/* The animated diagram inside tutorial */
+.tut-diagram{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:14px; position:relative; overflow:hidden;
+}
+.tut-diagram canvas{width:100%;display:block;border-radius:8px;}
+
+/* Concept cards */
+.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.concept-card{
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:10px 8px; text-align:center;
+}
+.concept-card .cc-icon{font-size:1.5rem;margin-bottom:4px;}
+.concept-card .cc-title{font-size:0.7rem;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:4px;}
+.concept-card .cc-text{font-size:0.62rem;color:var(--muted);line-height:1.5;}
+
+/* Step action card */
+.action-card{
+  background:rgba(0,207,255,0.07);
+  border:1px solid rgba(0,207,255,0.2);
+  border-radius:10px; padding:12px 14px;
+  display:flex; gap:10px; align-items:flex-start;
+}
+.action-card .ac-icon{font-size:1.3rem;flex-shrink:0;margin-top:2px;}
+.action-card .ac-body{}
+.action-card .ac-title{font-size:0.78rem;font-weight:700;color:var(--accent);margin-bottom:4px;}
+.action-card .ac-text{font-size:0.67rem;color:var(--muted);line-height:1.55;}
+.action-card .ac-text strong{color:var(--text);}
+
+/* Warning card */
+.warn-card{
+  background:rgba(255,61,90,0.08);
+  border:1px solid rgba(255,61,90,0.25);
+  border-radius:10px; padding:11px 13px;
+  display:flex; gap:10px; align-items:flex-start;
+}
+.warn-card .wc-icon{font-size:1.2rem;flex-shrink:0;margin-top:1px;}
+.warn-card .wc-text{font-size:0.67rem;color:#ff9aaa;line-height:1.55;}
+.warn-card .wc-text strong{color:var(--warn);}
+
+/* Scoring card */
+.score-explain{
+  background:rgba(255,215,0,0.07);
+  border:1px solid rgba(255,215,0,0.2);
+  border-radius:10px; padding:11px 13px;
+}
+.score-explain .se-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:0.68rem;}
+.score-explain .se-row .se-label{color:var(--muted);}
+.score-explain .se-row .se-val{font-family:'Space Mono',monospace;font-weight:700;color:var(--gold);}
+.score-explain .se-row.bad .se-val{color:var(--warn);}
+.score-explain .se-divider{border:none;border-top:1px solid rgba(255,215,0,0.15);margin:5px 0;}
+
+/* Tutorial nav buttons */
+.tut-nav{display:flex;gap:10px;margin-top:4px;}
+.tut-btn{
+  font-family:'Syne',sans-serif; font-size:0.85rem; font-weight:700;
+  padding:13px 0; border-radius:10px; border:none; cursor:pointer;
+  transition:all 0.15s; flex:1;
+}
+.tut-btn.primary{background:linear-gradient(135deg,#003580,#0060cc);color:#fff;border:1px solid rgba(0,200,255,0.3);}
+.tut-btn.primary:hover{background:linear-gradient(135deg,#004090,#0070dd);}
+.tut-btn.secondary{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.tut-btn.secondary:hover{border-color:var(--accent);color:var(--accent);}
+.tut-btn.green{background:linear-gradient(135deg,#005020,#00aa44);color:#fff;border:1px solid rgba(77,255,145,0.3);}
+
+/* "Try it" mini interactive inside tutorial */
+.try-it{
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:12px; padding:12px; text-align:center;
+}
+.try-it .try-title{font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;font-weight:700;}
+.try-it .try-btns{display:flex;gap:8px;justify-content:center;}
+.try-it .try-btn{
+  font-family:'Syne',sans-serif; font-size:0.82rem; font-weight:700;
+  padding:10px 16px; border-radius:9px; border:none; cursor:pointer;
+  transition:all 0.15s; user-select:none;
+}
+.try-it .try-btn.blue{background:linear-gradient(135deg,#003366,#0055bb);color:#fff;border:1px solid rgba(0,200,255,0.25);}
+.try-it .try-btn.red{background:linear-gradient(135deg,#4a0d00,#bb2200);color:#fff;border:1px solid rgba(255,100,50,0.25);}
+.try-it .try-btn:active{transform:scale(0.93);}
+.try-result{font-size:0.72rem;color:var(--accent3);margin-top:8px;min-height:18px;font-weight:600;}
+
+/* ============================================================ */
+/* GAME OVERLAYS                                               */
+/* ============================================================ */
+.overlay{position:fixed;inset:0;background:rgba(7,16,31,0.93);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.overlay-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 22px;text-align:center;max-width:330px;width:90%;transform:translateY(18px);transition:transform 0.3s;}
+.overlay.show .overlay-box{transform:translateY(0);}
+.overlay-icon{font-size:2.8rem;margin-bottom:7px;}
+.overlay-title{font-size:1.3rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.overlay-title.green{color:var(--accent3);}
+.overlay-title.red{color:var(--warn);}
+.overlay-title.gold{color:var(--gold);}
+.overlay-title.blue{color:var(--accent);}
+.overlay-sub{font-size:0.75rem;color:var(--muted);margin-bottom:14px;line-height:1.6;}
+.overlay-score{font-family:'Space Mono',monospace;font-size:1.7rem;color:var(--gold);font-weight:700;margin-bottom:18px;}
+.overlay-btns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;}
+.ov-btn{font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;padding:11px 16px;border-radius:9px;border:none;cursor:pointer;transition:all 0.15s;min-width:100px;}
+.ov-btn.primary{background:linear-gradient(135deg,#003580,#0060cc);color:#fff;border:1px solid rgba(0,200,255,0.3);}
+.ov-btn.outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+
+.score-pop{position:fixed;font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;pointer-events:none;z-index:200;animation:floatup 1s ease forwards;}
+@keyframes floatup{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-55px) scale(1.3)}}
+#particleCanvas{position:fixed;inset:0;pointer-events:none;z-index:50;}
+</style>
+</head>
+<body>
+<canvas id="particleCanvas"></canvas>
+
+<!-- ============================================================ -->
+<!-- TUTORIAL OVERLAY                                            -->
+<!-- ============================================================ -->
+<div id="tutorialOverlay">
+<div class="tut-box">
+
+  <!-- Step dots -->
+  <div class="tut-dots" id="tutDots"></div>
+
+  <!-- STEP 0: Welcome -->
+  <div class="tut-step active" id="tut0">
+    <div class="tut-icon">🧬</div>
+    <div class="tut-title">Bem-vindo ao Osmose!</div>
+    <div class="tut-sub">Você vai aprender na prática como a água se move pelas células do nosso corpo — um processo chamado <strong style="color:var(--accent)">osmose</strong>.</div>
+
+    <div class="tut-diagram">
+      <canvas id="tutCanvas0" height="160"></canvas>
+    </div>
+
+    <div class="action-card">
+      <div class="ac-icon">🎯</div>
+      <div class="ac-body">
+        <div class="ac-title">Seu objetivo</div>
+        <div class="ac-text">Fazer as duas células atingirem o <strong>equilíbrio osmótico</strong> — ou seja, a mesma concentração de soluto nos dois lados da membrana.</div>
+      </div>
+    </div>
+
+    <div class="tut-nav">
+      <button class="tut-btn primary" onclick="tutNext()">Próximo → O que é soluto?</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: Solute -->
+  <div class="tut-step" id="tut1">
+    <div class="tut-icon">🟡</div>
+    <div class="tut-title">O que é soluto?</div>
+    <div class="tut-sub">O soluto são as partículas dissolvidas dentro de cada célula. No jogo, eles aparecem como <strong style="color:var(--gold)">pontos amarelos</strong>.</div>
+
+    <div class="tut-diagram">
+      <canvas id="tutCanvas1" height="160"></canvas>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="cc-icon">🔵</div>
+        <div class="cc-title">Hipotônica</div>
+        <div class="cc-text">Célula com <strong>menos</strong> soluto. Concentração menor.</div>
+      </div>
+      <div class="concept-card">
+        <div class="cc-icon">🔴</div>
+        <div class="cc-title">Hipertônica</div>
+        <div class="cc-text">Célula com <strong>mais</strong> soluto. Concentração maior.</div>
+      </div>
+    </div>
+
+    <div class="tut-nav">
+      <button class="tut-btn secondary" onclick="tutPrev()">← Voltar</button>
+      <button class="tut-btn primary" onclick="tutNext()">Próximo → A água flui!</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Water flows passively -->
+  <div class="tut-step" id="tut2">
+    <div class="tut-icon">💧</div>
+    <div class="tut-title">A água flui sozinha!</div>
+    <div class="tut-sub">A água sempre se move <strong style="color:var(--accent)">da célula com menos soluto → para a com mais soluto</strong>. Esse processo é <strong style="color:var(--accent3)">automático e passivo</strong> — não gasta energia!</div>
+
+    <div class="tut-diagram">
+      <canvas id="tutCanvas2" height="170"></canvas>
+    </div>
+
+    <div class="action-card">
+      <div class="ac-icon">✅</div>
+      <div class="ac-body">
+        <div class="ac-title">Como funciona no jogo</div>
+        <div class="ac-text">
+          Você <strong>não controla a água diretamente</strong>.<br>
+          A água flui <strong>sozinha</strong> ao longo da partida, conforme o gradiente osmótico que você criar com o soluto.
+        </div>
+      </div>
+    </div>
+
+    <div class="tut-nav">
+      <button class="tut-btn secondary" onclick="tutPrev()">← Voltar</button>
+      <button class="tut-btn primary" onclick="tutNext()">Próximo → Seus controles</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Controls -->
+  <div class="tut-step" id="tut3">
+    <div class="tut-icon">🎮</div>
+    <div class="tut-title">Seus controles</div>
+    <div class="tut-sub">Você controla apenas o <strong style="color:var(--gold)">soluto</strong>. A água reage automaticamente.</div>
+
+    <div class="action-card">
+      <div class="ac-icon">🟡</div>
+      <div class="ac-body">
+        <div class="ac-title">Botão "🟡 +" — Adicionar soluto</div>
+        <div class="ac-text">Aumenta a concentração da célula. A célula fica <strong>hipertônica</strong> e começa a <strong>atrair água</strong> do meio e da célula vizinha.</div>
+      </div>
+    </div>
+    <div class="action-card" style="background:rgba(255,61,90,0.07);border-color:rgba(255,61,90,0.2);">
+      <div class="ac-icon">◯</div>
+      <div class="ac-body">
+        <div class="ac-title" style="color:var(--accent2)">Botão "− ◯" — Remover soluto</div>
+        <div class="ac-text">Diminui a concentração da célula. A célula fica <strong>hipotônica</strong> e começa a <strong>perder água</strong> para o meio.</div>
+      </div>
+    </div>
+
+    <div class="try-it">
+      <div class="try-title">✨ Experimente agora!</div>
+      <div class="try-btns">
+        <button class="try-btn blue" onclick="tryAddSolute('A')">🟡 + Soluto A</button>
+        <button class="try-btn red" onclick="tryAddSolute('B')">🟡 + Soluto B</button>
+      </div>
+      <div class="try-result" id="tryResult"></div>
+    </div>
+
+    <div class="tut-nav">
+      <button class="tut-btn secondary" onclick="tutPrev()">← Voltar</button>
+      <button class="tut-btn primary" onclick="tutNext()">Próximo → Perigos!</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Dangers -->
+  <div class="tut-step" id="tut4">
+    <div class="tut-icon">⚠️</div>
+    <div class="tut-title">Cuidado com os perigos!</div>
+    <div class="tut-sub">Exagerar no soluto pode causar desastres celulares.</div>
+
+    <div class="warn-card">
+      <div class="wc-icon">💧</div>
+      <div class="wc-text"><strong>Lise celular (célula estoura)</strong><br>Se uma célula absorver água demais, ela vai inchar e romper. Game over!</div>
+    </div>
+    <div class="warn-card">
+      <div class="wc-icon">🏜️</div>
+      <div class="wc-text"><strong>Desidratação celular</strong><br>Se uma célula perder toda a água, ela murcha e morre. Game over!</div>
+    </div>
+    <div class="warn-card">
+      <div class="wc-icon">⏱️</div>
+      <div class="wc-text"><strong>Tempo esgotado</strong><br>Cada fase tem um limite de tempo. Se não alcançar o equilíbrio a tempo, você perde uma vida!</div>
+    </div>
+
+    <div class="action-card">
+      <div class="ac-icon">❤️</div>
+      <div class="ac-body">
+        <div class="ac-title">Você tem 3 vidas</div>
+        <div class="ac-text">Cada erro grave custa uma vida. Perca as 3 e o jogo acaba — mas você pode reiniciar a fase quantas quiser enquanto tiver vidas.</div>
+      </div>
+    </div>
+
+    <div class="tut-nav">
+      <button class="tut-btn secondary" onclick="tutPrev()">← Voltar</button>
+      <button class="tut-btn primary" onclick="tutNext()">Próximo → Pontuação</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: Score -->
+  <div class="tut-step" id="tut5">
+    <div class="tut-icon">🏆</div>
+    <div class="tut-title">Como ganhar pontos?</div>
+    <div class="tut-sub">Quanto mais rápido e preciso você for, mais pontos você ganha!</div>
+
+    <div class="score-explain">
+      <div class="se-row"><span class="se-label">✅ Cada ação (+ ou − soluto)</span><span class="se-val">+3 a +5 pts</span></div>
+      <hr class="se-divider">
+      <div class="se-row"><span class="se-label">⏱ Bônus de velocidade</span><span class="se-val">até +500 pts</span></div>
+      <div class="se-row"><span class="se-label">🎯 Bônus de precisão</span><span class="se-val">até +200 pts</span></div>
+      <div class="se-row"><span class="se-label">🏅 Completar a fase</span><span class="se-val">+300 a +1500</span></div>
+      <hr class="se-divider">
+      <div class="se-row bad"><span class="se-label">⏱ Cada segundo nos últimos 10s</span><span class="se-val">−pts</span></div>
+    </div>
+
+    <div class="action-card">
+      <div class="ac-icon">💡</div>
+      <div class="ac-body">
+        <div class="ac-title">Estratégia</div>
+        <div class="ac-text">Observe as <strong>barras de concentração</strong> na tela. Quando as duas barras estiverem na mesma altura, você alcançou o equilíbrio!</div>
+      </div>
+    </div>
+
+    <div class="tut-nav">
+      <button class="tut-btn secondary" onclick="tutPrev()">← Voltar</button>
+      <button class="tut-btn primary" onclick="tutNext()">Próximo → Leia a tela</button>
+    </div>
+  </div>
+
+  <!-- STEP 6: Reading the UI -->
+  <div class="tut-step" id="tut6">
+    <div class="tut-icon">📊</div>
+    <div class="tut-title">Lendo a tela do jogo</div>
+    <div class="tut-sub">Aqui está tudo que você vai ver durante o jogo:</div>
+
+    <div class="tut-diagram">
+      <canvas id="tutCanvas6" height="200"></canvas>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="cc-icon">🟡</div>
+        <div class="cc-title">Pontos amarelos</div>
+        <div class="cc-text">São os solutos dentro de cada célula</div>
+      </div>
+      <div class="concept-card">
+        <div class="cc-icon">💧</div>
+        <div class="cc-title">Partículas azuis</div>
+        <div class="cc-text">São moléculas de água em movimento passivo</div>
+      </div>
+      <div class="concept-card">
+        <div class="cc-icon">→</div>
+        <div class="cc-title">Seta central</div>
+        <div class="cc-text">Indica o sentido do fluxo de água</div>
+      </div>
+      <div class="concept-card">
+        <div class="cc-icon">📶</div>
+        <div class="cc-title">Barras de conc.</div>
+        <div class="cc-text">Mostram a concentração de cada célula</div>
+      </div>
+    </div>
+
+    <div class="tut-nav">
+      <button class="tut-btn secondary" onclick="tutPrev()">← Voltar</button>
+      <button class="tut-btn green" onclick="closeTutorial()">🧬 Começar a jogar!</button>
+    </div>
+  </div>
+
+</div><!-- /tut-box -->
+</div><!-- /tutorialOverlay -->
+
+<!-- ============================================================ -->
+<!-- MAIN GAME                                                   -->
+<!-- ============================================================ -->
+<div class="wrapper" id="gameWrapper" style="display:none;">
+
+  <div class="header">
+    <h1>🧬 OSMOSE</h1>
+    <div class="sub">Simulação de Transporte Osmótico — v3.2</div>
+  </div>
+
+  <div class="topbar">
+    <div class="stat-card phase"><div class="label">Fase</div><div class="value" id="phaseNum">1</div></div>
+    <div class="stat-card score"><div class="label">Pontos</div><div class="value" id="scoreVal">0</div></div>
+    <div class="stat-card lives"><div class="label">Vidas</div><div class="value" id="livesVal">❤️❤️❤️</div></div>
+  </div>
+
+  <div class="phase-banner">
+    <span class="phase-badge" id="phaseBadge">FASE 1</span>
+    <div style="flex:1">
+      <div class="phase-title" id="phaseTitle">—</div>
+      <div class="phase-desc" id="phaseDesc">—</div>
+    </div>
+  </div>
+
+  <div class="timer-wrap">
+    <span class="timer-label">⏱ Tempo</span>
+    <div class="timer-track"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+    <span class="timer-num" id="timerNum">60</span>
+  </div>
+
+  <div class="arena">
+    <canvas id="sceneCanvas" height="220"></canvas>
+    <div class="conc-section">
+      <div class="conc-label">▼ Concentração Osmótica — iguale as barras para vencer!</div>
+      <div class="conc-bars">
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill a" id="barA" style="height:30%"></div></div>
+          <div class="bar-val" id="barValA">—</div>
+        </div>
+        <div class="bar-mid">CONC<br>A / B</div>
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill b" id="barB" style="height:70%"></div></div>
+          <div class="bar-val" id="barValB">—</div>
+        </div>
+      </div>
+      <div class="equil-indicator far" id="equilIndicator">⚖️ Alcance o equilíbrio osmótico</div>
+    </div>
+  </div>
+
+  <div class="passive-label">
+    <span class="tag">TRANSPORTE PASSIVO</span>
+    A água move-se sozinha
+    <span class="tag">SEM GASTO DE ATP</span>
+  </div>
+
+  <div class="feedback info" id="feedbackMsg">Adicione ou remova soluto para criar um gradiente osmótico!</div>
+  <div class="move-row">
+    <div class="move-info">Ações: <span id="movesCount">0</span></div>
+    <div class="penalty-badge" id="penaltyBadge">−pts</div>
+  </div>
+
+  <!-- Hint bar (contextual) -->
+  <div style="background:rgba(0,207,255,0.05);border:1px solid rgba(0,207,255,0.12);border-radius:8px;padding:7px 10px;display:flex;gap:8px;align-items:flex-start;">
+    <span style="font-size:0.9rem;flex-shrink:0;">💡</span>
+    <div style="font-size:0.67rem;color:var(--muted);line-height:1.5;" id="hintText">
+      Use <strong style="color:var(--accent)">🟡 +</strong> para adicionar soluto e atrair água — use <strong style="color:var(--accent2)">− ◯</strong> para remover e liberar água.
+    </div>
+  </div>
+
+  <!-- SOLUTE CONTROLS -->
+  <div class="solute-controls">
+    <div class="solute-panel a">
+      <div class="cell-name">CÉLULA A</div>
+      <div class="solute-count a" id="soluteCountA">—</div>
+      <div class="solute-label">🟡 solutos na célula</div>
+      <div class="solute-btns">
+        <button class="sol-btn add"    id="btnAddA" onclick="addSolute('A')">🟡 + Soluto</button>
+        <button class="sol-btn remove" id="btnRemA" onclick="removeSolute('A')">− Soluto</button>
+      </div>
+    </div>
+    <div class="solute-panel b">
+      <div class="cell-name">CÉLULA B</div>
+      <div class="solute-count b" id="soluteCountB">—</div>
+      <div class="solute-label">🟡 solutos na célula</div>
+      <div class="solute-btns">
+        <button class="sol-btn add b"  id="btnAddB" onclick="addSolute('B')">🟡 + Soluto</button>
+        <button class="sol-btn remove" id="btnRemB" onclick="removeSolute('B')">− Soluto</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <button class="btn-outline" onclick="restartLevel()">↺ Reiniciar Fase</button>
+    <button class="btn-outline" onclick="openTutorial()">📖 Tutorial</button>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label"><span>Progresso das Fases</span><span id="progressLabel">1 / 8</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:12.5%"></div></div>
+  </div>
+
+</div><!-- /wrapper -->
+
+<!-- GAME OVERLAYS -->
+<div class="overlay" id="overlayWin">
+  <div class="overlay-box">
+    <div class="overlay-icon">🎉</div>
+    <div class="overlay-title green">EQUILÍBRIO!</div>
+    <div class="overlay-sub" id="winSub">Fase concluída!</div>
+    <div class="overlay-score" id="winScore">+500</div>
+    <div class="overlay-btns"><button class="ov-btn primary" onclick="nextLevel()">Próxima Fase ▶</button></div>
+  </div>
+</div>
+<div class="overlay" id="overlayDead">
+  <div class="overlay-box">
+    <div class="overlay-icon">💀</div>
+    <div class="overlay-title red">GAME OVER</div>
+    <div class="overlay-sub" id="deadSub">—</div>
+    <div class="overlay-score" id="deadScore">0 pts</div>
+    <div class="overlay-btns">
+      <button class="ov-btn primary" onclick="restartLevel()">↺ Tentar Novamente</button>
+      <button class="ov-btn outline" onclick="restartGame()">🔄 Recomeçar</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlayLevel">
+  <div class="overlay-box">
+    <div class="overlay-icon" id="levelIcon">🧫</div>
+    <div class="overlay-title blue" id="levelTitle">FASE 1</div>
+    <div class="overlay-sub" id="levelSub">—</div>
+    <div class="overlay-btns"><button class="ov-btn primary" onclick="startLevel()">Começar!</button></div>
+  </div>
+</div>
+<div class="overlay" id="overlayVictory">
+  <div class="overlay-box">
+    <div class="overlay-icon">🏆</div>
+    <div class="overlay-title gold">VITÓRIA TOTAL!</div>
+    <div class="overlay-sub">Você dominou a osmose! Todas as fases concluídas.</div>
+    <div class="overlay-score" id="finalScore">0 pts</div>
+    <div class="overlay-btns"><button class="ov-btn primary" onclick="restartGame()">🔄 Jogar Novamente</button></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   TUTORIAL SYSTEM
+   ============================================================ */
+const TOTAL_STEPS = 7;
+let tutStep = 0;
+
+function buildDots() {
+  const c = document.getElementById('tutDots');
+  c.innerHTML = '';
+  for (let i = 0; i < TOTAL_STEPS; i++) {
+    const d = document.createElement('div');
+    d.className = 'tut-dot' + (i === tutStep ? ' active' : (i < tutStep ? ' done' : ''));
+    c.appendChild(d);
+  }
+}
+
+function tutNext() { tutGoTo(tutStep + 1); }
+function tutPrev() { tutGoTo(tutStep - 1); }
+function tutGoTo(n) {
+  if (n < 0 || n >= TOTAL_STEPS) return;
+  document.getElementById('tut' + tutStep).classList.remove('active');
+  tutStep = n;
+  document.getElementById('tut' + tutStep).classList.add('active');
+  buildDots();
+  drawTutCanvases();
+}
+
+function openTutorial() {
+  tutStep = 0;
+  buildDots();
+  document.querySelectorAll('.tut-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('tut0').classList.add('active');
+  document.getElementById('tutorialOverlay').classList.add('show');
+  drawTutCanvases();
+}
+
+function closeTutorial() {
+  document.getElementById('tutorialOverlay').classList.remove('show');
+  document.getElementById('gameWrapper').style.display = 'flex';
+  // Init game
+  state.score = 0; state.lives = 3; state.phase = 0;
+  const p = PHASES[0];
+  document.getElementById('levelIcon').textContent  = p.icon;
+  document.getElementById('levelTitle').textContent = 'FASE 1: ' + p.title;
+  document.getElementById('levelSub').innerHTML     = p.desc + '<br><br>Adicione ou remova soluto para criar o gradiente osmótico!';
+  updateScoreDisplay(); updateLivesDisplay();
+  showOverlay('overlayLevel');
+  state.sA = p.init.sA; state.wA = p.init.wA;
+  state.sB = p.init.sB; state.wB = p.init.wB;
+  state.extraW = p.init.extraW;
+  setTimeout(() => { resizeScene(); drawScene(); }, 100);
+}
+
+/* ---- Tutorial canvas drawings ---- */
+let tutAnim0 = null, tutAnim2 = null, tutAnim6 = null;
+let tutT = 0;
+
+function drawTutCanvases() {
+  [tutAnim0, tutAnim2, tutAnim6].forEach(a => a && cancelAnimationFrame(a));
+  tutT = 0;
+  if (tutStep === 0) animTut0();
+  if (tutStep === 1) drawTut1();
+  if (tutStep === 2) animTut2();
+  if (tutStep === 6) animTut6();
+}
+
+/* Step 0: Two cells reaching equilibrium over time */
+function animTut0() {
+  const cv = document.getElementById('tutCanvas0');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  cv.width = cv.offsetWidth || 400;
+  const W = cv.width, H = cv.height;
+  tutT++;
+  ctx.clearRect(0,0,W,H);
+  const t = (Math.sin(tutT * 0.03) + 1) / 2; // 0→1→0
+  const wA = 20 + t * 14; const wB = 34 - t * 14;
+  const sA = 4; const sB = 12;
+  const cx1 = W*0.28, cx2 = W*0.72, cy = H*0.47;
+  const rA = 16 + wA * 0.7, rB = 16 + wB * 0.7;
+  // extracell bg
+  ctx.fillStyle = 'rgba(0,100,180,0.08)';
+  ctx.fillRect(0,0,W,H);
+  // cells
+  drawTutCell(ctx, cx1, cy, rA, '#002255','#0088ff', sA, 1001);
+  drawTutCell(ctx, cx2, cy, rB, '#2a0500','#ff5500', sB, 2002);
+  // membrane
+  ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(0,207,255,0.4)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W/2, cy-55); ctx.lineTo(W/2, cy+55); ctx.stroke();
+  ctx.setLineDash([]);
+  // arrow
+  if (t > 0.05) {
+    ctx.globalAlpha = Math.min(1, t * 2);
+    ctx.font = `bold ${Math.round(W*0.07)}px sans-serif`;
+    ctx.fillStyle = '#00cfff'; ctx.textAlign = 'center';
+    ctx.fillText('→', W/2, cy+8);
+    ctx.font = `${Math.round(W*0.028)}px Syne`; ctx.fillStyle='rgba(0,207,255,0.7)';
+    ctx.fillText('H₂O', W/2, cy+22);
+    ctx.globalAlpha = 1;
+  }
+  // labels
+  ctx.font = `bold ${Math.round(W*0.028)}px Syne`; ctx.textAlign='center';
+  ctx.fillStyle='#5a8aaa';
+  ctx.fillText('CÉLULA A', cx1, cy+rA+14);
+  ctx.fillText('CÉLULA B', cx2, cy+rB+14);
+  ctx.font = `${Math.round(W*0.024)}px Space Mono`;
+  ctx.fillStyle = sB/wB > sA/wA ? '#00cfff' : '#4a6a80';
+  ctx.fillText('+ soluto', cx2, cy+rB+26);
+  tutAnim0 = requestAnimationFrame(animTut0);
+}
+
+/* Step 1: Static — explain solute */
+function drawTut1() {
+  const cv = document.getElementById('tutCanvas1');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  cv.width = cv.offsetWidth || 400;
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='rgba(0,100,180,0.07)'; ctx.fillRect(0,0,W,H);
+  const cx1=W*0.28, cx2=W*0.72, cy=H*0.47;
+  drawTutCell(ctx,cx1,cy,42,'#002255','#0088ff',3,1001);
+  drawTutCell(ctx,cx2,cy,48,'#2a0500','#ff5500',14,2002);
+  ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(0,207,255,0.4)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W/2,cy-60); ctx.lineTo(W/2,cy+60); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font=`bold ${Math.round(W*0.028)}px Syne`; ctx.textAlign='center';
+  ctx.fillStyle='var(--muted)';
+  ctx.fillStyle='#5a8aaa';
+  ctx.fillText('Hipotônica',cx1,cy+58);
+  ctx.fillText('Hipertônica',cx2,cy+64);
+  ctx.font=`${Math.round(W*0.023)}px Space Mono`;
+  ctx.fillStyle='#3a6a80';
+  ctx.fillText('🟡 3 solutos',cx1,cy+70);
+  ctx.fillText('🟡 14 solutos',cx2,cy+76);
+}
+
+/* Step 2: Water flowing animation */
+function animTut2() {
+  const cv = document.getElementById('tutCanvas2');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  cv.width = cv.offsetWidth || 400;
+  const W = cv.width, H = cv.height;
+  tutT++;
+  ctx.clearRect(0,0,W,H);
+  // extracell
+  ctx.fillStyle='rgba(0,120,200,0.09)'; ctx.fillRect(0,0,W,H);
+  const cx1=W*0.27, cx2=W*0.73, cy=H*0.44;
+  const t = (tutT % 120) / 120; // 0→1 loop
+  // water going right (from A to B)
+  const numDrops = 5;
+  for (let i=0;i<numDrops;i++) {
+    const phase = (t + i/numDrops) % 1;
+    const px = W*0.38 + (W*0.24) * phase;
+    const py = cy + Math.sin(phase*Math.PI*3)*8*(1-phase);
+    const alpha = phase < 0.1 ? phase*10 : phase > 0.9 ? (1-phase)*10 : 1;
+    ctx.globalAlpha = alpha * 0.85;
+    ctx.fillStyle='#55ddff';
+    ctx.shadowColor='#00cfff'; ctx.shadowBlur=6;
+    ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  ctx.globalAlpha=1;
+  drawTutCell(ctx,cx1,cy,38,'#002255','#0088ff',3,1001);
+  drawTutCell(ctx,cx2,cy,46,'#2a0500','#ff5500',14,2002);
+  ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(0,207,255,0.4)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W/2,cy-62); ctx.lineTo(W/2,cy+62); ctx.stroke(); ctx.setLineDash([]);
+  // Big arrow
+  ctx.font=`bold ${Math.round(W*0.065)}px sans-serif`; ctx.fillStyle='rgba(0,207,255,0.7)'; ctx.textAlign='center';
+  ctx.fillText('→',W/2,cy+8);
+  ctx.font=`${Math.round(W*0.025)}px Syne`; ctx.fillStyle='rgba(0,207,255,0.55)';
+  ctx.fillText('H₂O flui passivamente',W/2,cy+22);
+  ctx.font=`bold ${Math.round(W*0.025)}px Syne`; ctx.fillStyle='#5a8aaa'; ctx.textAlign='center';
+  ctx.fillText('Hipotônica (perde água)',cx1,cy+56);
+  ctx.fillText('Hipertônica (ganha água)',cx2,cy+62);
+  tutAnim2 = requestAnimationFrame(animTut2);
+}
+
+/* Step 6: Annotated UI diagram */
+function animTut6() {
+  const cv = document.getElementById('tutCanvas6');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  cv.width = cv.offsetWidth || 400;
+  const W = cv.width, H = cv.height;
+  tutT++;
+  ctx.clearRect(0,0,W,H);
+  const t = (tutT % 80)/80;
+  // BG extracell
+  ctx.fillStyle='rgba(0,100,180,0.08)'; ctx.fillRect(0,0,W,H);
+  const cx1=W*0.28, cx2=W*0.72, cy=H*0.38;
+  drawTutCell(ctx,cx1,cy,36,'#002255','#0088ff',5,1001);
+  drawTutCell(ctx,cx2,cy,44,'#2a0500','#ff5500',14,2002);
+  // membrane
+  ctx.setLineDash([4,3]); ctx.strokeStyle='rgba(0,207,255,0.4)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W/2,cy-52); ctx.lineTo(W/2,cy+52); ctx.stroke(); ctx.setLineDash([]);
+  // animated water
+  const numDrops=4;
+  for(let i=0;i<numDrops;i++){
+    const ph=(t+i/numDrops)%1;
+    const px=W*0.40+(W*0.20)*ph, py=cy+Math.sin(ph*Math.PI*2)*6;
+    const al=ph<0.1?ph*10:ph>0.9?(1-ph)*10:1;
+    ctx.globalAlpha=al*0.8; ctx.fillStyle='#55ddff';
+    ctx.shadowColor='#00cfff'; ctx.shadowBlur=4;
+    ctx.beginPath(); ctx.arc(px,py,3.5,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+  }
+  ctx.globalAlpha=1;
+  // arrow
+  ctx.font=`bold ${Math.round(W*0.05)}px sans-serif`; ctx.fillStyle='rgba(0,207,255,0.65)'; ctx.textAlign='center';
+  ctx.fillText('→',W/2,cy+7);
+
+  // ANNOTATIONS with arrows
+  const fs = Math.round(W*0.026);
+  ctx.font=`${fs}px Syne`; ctx.textAlign='left';
+  // Solute dot annotation
+  ctx.fillStyle='#ffd700';
+  ctx.beginPath(); ctx.arc(cx2-10,cy-10,4,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(255,215,0,0.5)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(cx2-10,cy-10); ctx.lineTo(W*0.82,cy-28); ctx.stroke();
+  ctx.setLineDash([]); ctx.fillStyle='rgba(255,215,0,0.8)'; ctx.textAlign='left';
+  ctx.fillText('🟡 Soluto',W*0.83,cy-25);
+
+  // Water particle annotation
+  ctx.fillStyle='rgba(0,207,255,0.8)'; ctx.textAlign='right';
+  ctx.fillText('💧 Água (passiva)',W*0.17,cy+52);
+  ctx.strokeStyle='rgba(0,207,255,0.4)'; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(W*0.18,cy+46); ctx.lineTo(W/2-5,cy+6); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Arrow annotation
+  ctx.fillStyle='rgba(0,207,255,0.7)'; ctx.textAlign='center';
+  ctx.font=`${Math.round(fs*0.9)}px Syne`;
+  ctx.fillText('← seta = fluxo',W/2,cy+42);
+
+  // Membrane annotation
+  ctx.fillStyle='rgba(0,207,255,0.5)'; ctx.textAlign='right';
+  ctx.fillText('Membrana',W*0.44,cy-50);
+
+  tutAnim6 = requestAnimationFrame(animTut6);
+}
+
+/* Helper: draw tutorial cell with solute dots */
+function drawTutCell(ctx, cx, cy, r, fillColor, borderColor, soluteCount, seed) {
+  const bg = ctx.createRadialGradient(cx-r*0.2,cy-r*0.2,r*0.05,cx,cy,r);
+  bg.addColorStop(0, fillColor+'cc');
+  bg.addColorStop(1, fillColor+'44');
+  ctx.fillStyle=bg;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=borderColor; ctx.lineWidth=2; ctx.globalAlpha=0.8;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+  function rng(i){let x=Math.sin(seed+i*91.7)*43758.5453;return x-Math.floor(x);}
+  ctx.fillStyle='#ffd700'; ctx.shadowColor='#ffaa00'; ctx.shadowBlur=4;
+  for(let i=0;i<Math.min(soluteCount,30);i++){
+    const ang=rng(i*2)*Math.PI*2, dist=rng(i*2+1)*(r-6)*0.85;
+    ctx.beginPath(); ctx.arc(cx+Math.cos(ang)*dist,cy+Math.sin(ang)*dist,3,0,Math.PI*2); ctx.fill();
+  }
+  ctx.shadowBlur=0;
+}
+
+/* Try-it interaction in tutorial step 3 */
+let tryCount = {A:0, B:0};
+function tryAddSolute(cell) {
+  tryCount[cell]++;
+  const msgs = [
+    `✅ Soluto adicionado à célula ${cell}! A concentração subiu.`,
+    `💧 A água vai fluir para a célula ${cell} agora!`,
+    `🎯 Isso mesmo! Mais soluto = mais atração de água.`,
+    `⚖️ Se ambas tiverem a mesma concentração, é equilíbrio!`
+  ];
+  const total = tryCount.A + tryCount.B;
+  document.getElementById('tryResult').textContent = msgs[Math.min(total-1, msgs.length-1)];
+}
+
+/* ============================================================
+   GAME DATA
+   ============================================================ */
+const PHASES = [
+  {id:1,title:"Osmose Básica",desc:"Crie um gradiente e observe a água fluir",icon:"🧫",
+   hint:"<strong>+ Soluto</strong> numa célula cria gradiente → água flui passivamente para ela. Iguale as barras de concentração!",
+   timer:90,solutePerClick:2,maxSolute:30,minSolute:1,tolerance:0.06,penaltyTimer:4,scoreBonus:300,
+   init:{sA:4,wA:40,sB:12,wB:40,extraW:20}},
+  {id:2,title:"Gradiente Extremo",desc:"Grande diferença — não esvazie o meio extracelular!",icon:"⚡",
+   hint:"Diferença extrema! Muito soluto pode <strong>esvaziar o meio extracelular</strong>. Monitore o fundo da tela!",
+   timer:80,solutePerClick:2,maxSolute:40,minSolute:1,tolerance:0.06,penaltyTimer:6,scoreBonus:450,
+   init:{sA:2,wA:40,sB:22,wB:40,extraW:16}},
+  {id:3,title:"Quase Equilíbrio",desc:"Pequena diferença — precisão cirúrgica necessária",icon:"🎯",
+   hint:"Concentrações próximas! Um soluto a mais pode desequilibrar tudo. <strong>Calcule com cuidado.</strong>",
+   timer:70,solutePerClick:1,maxSolute:30,minSolute:1,tolerance:0.04,penaltyTimer:7,scoreBonus:500,
+   init:{sA:8,wA:40,sB:11,wB:40,extraW:18}},
+  {id:4,title:"Invertido",desc:"Célula B mais concentrada — inverta o raciocínio!",icon:"🔄",
+   hint:"Agora B é hipertônica! Aumente o soluto de A <strong>ou</strong> remova de B para equilibrar.",
+   timer:75,solutePerClick:2,maxSolute:35,minSolute:1,tolerance:0.05,penaltyTimer:8,scoreBonus:550,
+   init:{sA:14,wA:40,sB:4,wB:40,extraW:18}},
+  {id:5,title:"Múltiplos Solutos",desc:"Alta concentração — monitore as barras de perto",icon:"🔬",
+   hint:"Muitos solutos → <strong>alta pressão osmótica</strong>. Observe como a célula incha ao receber água!",
+   timer:65,solutePerClick:2,maxSolute:50,minSolute:1,tolerance:0.05,penaltyTimer:9,scoreBonus:700,
+   init:{sA:6,wA:36,sB:26,wB:36,extraW:14}},
+  {id:6,title:"Hipotônico Extremo",desc:"Célula A frágil — risco de lise celular!",icon:"💥",
+   hint:"Célula A quase sem soluto! Se receber <strong>água demais</strong>, ela rompe (lise celular = game over)!",
+   timer:60,solutePerClick:2,maxSolute:40,minSolute:0,tolerance:0.05,penaltyTimer:10,scoreBonus:800,
+   init:{sA:1,wA:36,sB:20,wB:36,extraW:16}},
+  {id:7,title:"Precisão Máxima",desc:"Tolerância mínima — equilíbrio perfeito exigido",icon:"💎",
+   hint:"Tolerância mínima! <strong>Cada soluto importa.</strong> Pense antes de agir.",
+   timer:55,solutePerClick:1,maxSolute:40,minSolute:1,tolerance:0.025,penaltyTimer:12,scoreBonus:1000,
+   init:{sA:5,wA:44,sB:15,wB:36,extraW:12}},
+  {id:8,title:"DESAFIO FINAL",desc:"Tudo ao máximo. Mostre que domina a osmose.",icon:"🔥",
+   hint:"<strong>Fase final!</strong> Tempo curto, meio extracelular limitado. Domine a osmose!",
+   timer:45,solutePerClick:2,maxSolute:50,minSolute:0,tolerance:0.04,penaltyTimer:15,scoreBonus:1500,
+   init:{sA:3,wA:32,sB:24,wB:28,extraW:10}},
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let state = {
+  phase:0,score:0,lives:3,
+  sA:0,wA:0,sB:0,wB:0,extraW:0,
+  moves:0,timerMax:60,timerLeft:60,
+  timerInterval:null,waterFlowInterval:null,
+  running:false,waterParticles:[],
+};
+
+/* ============================================================
+   SCENE CANVAS
+   ============================================================ */
+const scene = document.getElementById('sceneCanvas');
+const sctx  = scene.getContext('2d');
+function resizeScene(){const w=scene.parentElement.clientWidth-20;scene.width=w;scene.height=220;}
+window.addEventListener('resize',()=>{resizeScene();});
+
+let dotCacheA=[],dotCacheB=[],lastSA=-1,lastSB=-1;
+function getDots(count,seed){
+  const dots=[];
+  function rng(i){let x=Math.sin(seed+i*91.7)*43758.5453;return x-Math.floor(x);}
+  let placed=0,att=0;
+  while(placed<Math.min(count,40)&&att<500){
+    att++;
+    const angle=rng(att*2)*Math.PI*2,dist=rng(att*2+1)*0.85;
+    dots.push({da:angle,dd:dist});
+    placed++;
+  }
+  return dots;
+}
+
+function drawScene(){
+  const W=scene.width,H=scene.height;
+  if(!W||!H)return;
+  sctx.clearRect(0,0,W,H);
+  const {sA,wA,sB,wB,extraW,waterParticles}=state;
+  const totalW=wA+wB+extraW;
+  const midX=W/2,cellY=H*0.42;
+  const maxR=Math.min(W*0.19,66),minR=16;
+  function cellR(w){const f=Math.max(0,Math.min(1,w/(totalW*0.45)));return minR+(maxR-minR)*f;}
+  const rA=cellR(wA),rB=cellR(wB);
+  const cellAx=midX-W*0.27,cellBx=midX+W*0.27;
+
+  // Extracellular bg
+  const alpha=Math.min(0.22,extraW/(totalW*0.5)*0.28);
+  const eg=sctx.createLinearGradient(0,0,W,H);
+  eg.addColorStop(0,`rgba(0,150,220,${alpha})`);
+  eg.addColorStop(1,`rgba(0,80,160,${alpha*0.5})`);
+  sctx.fillStyle=eg; sctx.fillRect(0,0,W,H);
+
+  // Extracell label
+  sctx.font=`${Math.round(W*0.023)}px Space Mono`;
+  sctx.fillStyle='rgba(0,180,255,0.4)'; sctx.textAlign='center';
+  sctx.fillText(`💧 Meio Extracelular | água: ${extraW.toFixed(1)}`,midX,H*0.93);
+
+  // Water particles
+  for(const p of waterParticles){
+    sctx.globalAlpha=p.life*0.82;
+    sctx.fillStyle='#55ddff'; sctx.shadowColor='#00cfff'; sctx.shadowBlur=6;
+    sctx.beginPath(); sctx.arc(p.x,p.y,p.r,0,Math.PI*2); sctx.fill(); sctx.shadowBlur=0;
+  }
+  sctx.globalAlpha=1;
+
+  // Membrane
+  const membH=Math.max(rA,rB)*2.6;
+  sctx.setLineDash([5,4]); sctx.strokeStyle='rgba(0,207,255,0.45)'; sctx.lineWidth=3;
+  sctx.beginPath(); sctx.moveTo(midX,cellY-membH/2); sctx.lineTo(midX,cellY+membH/2); sctx.stroke();
+  sctx.setLineDash([]);
+  sctx.font=`${Math.round(W*0.021)}px Syne`; sctx.fillStyle='rgba(0,207,255,0.45)'; sctx.textAlign='center';
+  sctx.fillText('MEMBRANA SEMIPERMEÁVEL',midX,cellY-membH/2-5);
+
+  // Flow arrow
+  const cA=sA/Math.max(wA,0.01),cB=sB/Math.max(wB,0.01);
+  const diff=cB-cA;
+  if(Math.abs(diff)>0.03){
+    const al=Math.min(1,Math.abs(diff)/0.3);
+    sctx.globalAlpha=al*0.9;
+    sctx.font=`bold ${Math.round(W*0.07)}px sans-serif`; sctx.fillStyle=diff>0?'#00cfff':'#ff6b35'; sctx.textAlign='center';
+    sctx.fillText(diff>0?'→':'←',midX,cellY+9);
+    sctx.font=`${Math.round(W*0.022)}px Syne`; sctx.fillStyle=diff>0?'rgba(0,207,255,0.7)':'rgba(255,107,53,0.7)';
+    sctx.fillText('H₂O',midX,cellY+24);
+    sctx.globalAlpha=1;
+  } else {
+    sctx.globalAlpha=0.7; sctx.font=`${Math.round(W*0.05)}px sans-serif`; sctx.fillStyle='#4dff91'; sctx.textAlign='center';
+    sctx.fillText('⚖',midX,cellY+9); sctx.globalAlpha=1;
+  }
+
+  // Draw cells
+  function drawCell(cx,cy,r,fill,glow){
+    const g=sctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r*1.6);
+    g.addColorStop(0,glow+'18'); g.addColorStop(1,'transparent');
+    sctx.fillStyle=g; sctx.beginPath(); sctx.arc(cx,cy,r*1.6,0,Math.PI*2); sctx.fill();
+    const bg=sctx.createRadialGradient(cx-r*0.25,cy-r*0.25,r*0.05,cx,cy,r);
+    bg.addColorStop(0,fill+'cc'); bg.addColorStop(1,fill+'55');
+    sctx.fillStyle=bg; sctx.beginPath(); sctx.arc(cx,cy,r,0,Math.PI*2); sctx.fill();
+    sctx.strokeStyle=glow; sctx.lineWidth=2.5; sctx.globalAlpha=0.8;
+    sctx.beginPath(); sctx.arc(cx,cy,r,0,Math.PI*2); sctx.stroke(); sctx.globalAlpha=1;
+  }
+  drawCell(cellAx,cellY,rA,'#002255','#0088ff');
+  drawCell(cellBx,cellY,rB,'#2a0500','#ff5500');
+
+  // Danger flash
+  if(wA<=3){sctx.fillStyle='rgba(255,60,60,0.25)';sctx.beginPath();sctx.arc(cellAx,cellY,rA,0,Math.PI*2);sctx.fill();}
+  if(wB<=3){sctx.fillStyle='rgba(255,60,60,0.25)';sctx.beginPath();sctx.arc(cellBx,cellY,rB,0,Math.PI*2);sctx.fill();}
+
+  // Dots
+  if(sA!==lastSA){dotCacheA=getDots(sA,1001);lastSA=sA;}
+  if(sB!==lastSB){dotCacheB=getDots(sB,2002);lastSB=sB;}
+  sctx.fillStyle='#ffd700'; sctx.shadowColor='#ffaa00'; sctx.shadowBlur=5;
+  for(const d of dotCacheA){sctx.beginPath();sctx.arc(cellAx+Math.cos(d.da)*d.dd*(rA-6),cellY+Math.sin(d.da)*d.dd*(rA-6),3.5,0,Math.PI*2);sctx.fill();}
+  for(const d of dotCacheB){sctx.beginPath();sctx.arc(cellBx+Math.cos(d.da)*d.dd*(rB-6),cellY+Math.sin(d.da)*d.dd*(rB-6),3.5,0,Math.PI*2);sctx.fill();}
+  sctx.shadowBlur=0;
+
+  // Cell labels
+  const fs=Math.round(W*0.026);
+  sctx.font=`bold ${fs}px Syne`; sctx.textAlign='center'; sctx.fillStyle='#ddeeff';
+  sctx.fillText('CÉLULA A',cellAx,cellY+rA+15);
+  sctx.fillText('CÉLULA B',cellBx,cellY+rB+15);
+  sctx.font=`${Math.round(fs*0.82)}px Space Mono`;
+  const isAH=cA>cB;
+  sctx.fillStyle=isAH?'#00cfff':'#4a6a80';
+  sctx.fillText(`c=${cA.toFixed(2)}`,cellAx,cellY+rA+27);
+  sctx.fillStyle=!isAH&&cB>cA?'#ff7755':'#4a6a80';
+  sctx.fillText(`c=${cB.toFixed(2)}`,cellBx,cellY+rB+27);
+  sctx.fillStyle='#3a5a70';
+  sctx.fillText(`💧${wA.toFixed(0)} 🟡${sA}`,cellAx,cellY+rA+39);
+  sctx.fillText(`💧${wB.toFixed(0)} 🟡${sB}`,cellBx,cellY+rB+39);
+}
+
+/* ============================================================
+   WATER PARTICLES + ANIMATION LOOP
+   ============================================================ */
+let animFrame=null;
+function tickWaterParticles(){
+  const W=scene.width,H=scene.height;
+  const midX=W/2,cellAx=midX-W*0.27,cellBx=midX+W*0.27,cellY=H*0.42;
+  state.waterParticles=state.waterParticles.filter(p=>p.life>0.05);
+  for(const p of state.waterParticles){p.x+=p.vx;p.y+=p.vy;p.vy+=0.02;p.life-=0.018;}
+  const cA=state.sA/Math.max(state.wA,0.01),cB=state.sB/Math.max(state.wB,0.01);
+  const diff=cB-cA,str=Math.min(1,Math.abs(diff)/0.5);
+  if(state.running&&Math.abs(diff)>0.03&&Math.random()<str*0.55){
+    const fromMem=Math.random()<0.65;
+    let px,py,vx,vy;
+    if(fromMem){
+      px=midX+(Math.random()-0.5)*10; py=cellY+(Math.random()-0.5)*36;
+      vx=diff>0?(1.5+Math.random()*2):-(1.5+Math.random()*2); vy=(Math.random()-0.5)*1.5;
+    } else {
+      px=Math.random()<0.5?(Math.random()*(midX-W*0.36)+5):(midX+W*0.36+Math.random()*(W-midX-W*0.36-5));
+      py=Math.random()*H*0.82+5;
+      const tx=diff>0?cellBx:cellAx,ty=cellY;
+      const dx=tx-px,dy=ty-py,dist=Math.sqrt(dx*dx+dy*dy)||1,sp=1.2+Math.random()*1.4;
+      vx=dx/dist*sp; vy=dy/dist*sp;
+    }
+    state.waterParticles.push({x:px,y:py,vx,vy,r:2.5+Math.random()*1.5,life:1});
+  }
+  drawScene();
+  animFrame=requestAnimationFrame(tickWaterParticles);
+}
+function startAnimation(){if(animFrame)cancelAnimationFrame(animFrame);tickWaterParticles();}
+
+/* ============================================================
+   PASSIVE WATER FLOW (logic)
+   ============================================================ */
+function tickWaterFlow(){
+  if(!state.running)return;
+  const cA=state.sA/Math.max(state.wA,0.01),cB=state.sB/Math.max(state.wB,0.01);
+  const diff=cB-cA;
+  if(Math.abs(diff)<0.015){checkWin();return;}
+  const rate=Math.min(1.4,Math.abs(diff)*3);
+  const from=diff>0?'A':'B';
+  if(from==='A'){
+    const fc=rate*0.6,fe=rate*0.4;
+    if(state.wA-fc<1){if(state.extraW>=rate){state.extraW-=rate;state.wB+=rate;}else{triggerLysis('A');return;}}
+    else if(state.extraW>=fe){state.wA-=fc;state.extraW-=fe;state.wB+=rate;}
+    else{state.wA-=rate;state.wB+=rate;}
+  } else {
+    const fc=rate*0.6,fe=rate*0.4;
+    if(state.wB-fc<1){if(state.extraW>=rate){state.extraW-=rate;state.wA+=rate;}else{triggerLysis('B');return;}}
+    else if(state.extraW>=fe){state.wB-=fc;state.extraW-=fe;state.wA+=rate;}
+    else{state.wB-=rate;state.wA+=rate;}
+  }
+  // Lysis from swelling
+  const tot=state.wA+state.wB+state.extraW;
+  if(state.wA>tot*0.76){triggerLysis('A');return;}
+  if(state.wB>tot*0.76){triggerLysis('B');return;}
+  updateDisplay();checkWin();
+}
+function triggerLysis(cell){state.running=false;clearAllIntervals();loseLife(`Lise celular! Célula ${cell} inchou demais e rompeu.`);}
+
+/* ============================================================
+   GAME LOGIC
+   ============================================================ */
+function getPhase(){return PHASES[state.phase];}
+
+function initPhase(){
+  const p=getPhase();
+  state.sA=p.init.sA;state.wA=p.init.wA;state.sB=p.init.sB;state.wB=p.init.wB;
+  state.extraW=p.init.extraW;state.moves=0;
+  state.timerMax=p.timer;state.timerLeft=p.timer;
+  state.waterParticles=[];state.running=true;
+  dotCacheA=[];dotCacheB=[];lastSA=-1;lastSB=-1;
+  document.getElementById('phaseNum').textContent=p.id;
+  document.getElementById('phaseBadge').textContent='FASE '+p.id;
+  document.getElementById('phaseTitle').textContent=p.title;
+  document.getElementById('phaseDesc').textContent=p.desc;
+  document.getElementById('hintText').innerHTML=p.hint;
+  document.getElementById('progressLabel').textContent=p.id+' / '+PHASES.length;
+  document.getElementById('progressFill').style.width=(p.id/PHASES.length*100)+'%';
+  updateScoreDisplay();updateLivesDisplay();updateDisplay();updateTimerDisplay();
+  startTimer();startWaterFlow();startAnimation();
+  setFeedback('Adicione ou remova soluto para criar um gradiente osmótico!','info');
+}
+
+function startTimer(){
+  clearInterval(state.timerInterval);
+  state.timerInterval=setInterval(()=>{
+    if(!state.running)return;
+    state.timerLeft=Math.max(0,state.timerLeft-1);
+    if(state.timerLeft<=10)addScore(-getPhase().penaltyTimer);
+    updateTimerDisplay();
+    if(state.timerLeft===0){clearAllIntervals();state.running=false;loseLife('O tempo acabou! Equilíbrio não alcançado a tempo.');}
+  },1000);
+}
+function startWaterFlow(){clearInterval(state.waterFlowInterval);state.waterFlowInterval=setInterval(tickWaterFlow,600);}
+function clearAllIntervals(){clearInterval(state.timerInterval);clearInterval(state.waterFlowInterval);}
+
+function updateTimerDisplay(){
+  const t=state.timerLeft,p=getPhase();
+  const pct=(t/state.timerMax)*100;
+  const fill=document.getElementById('timerFill');
+  fill.style.width=pct+'%';
+  fill.className='timer-fill'+(t<=10?' urgent':'');
+  fill.style.background=t<=10?'linear-gradient(90deg,#ff0000,#ff4757)':t<=20?'linear-gradient(90deg,#ff8800,#ffcc00)':'linear-gradient(90deg,var(--accent3),var(--accent))';
+  document.getElementById('timerNum').textContent=t;
+}
+
+function addSolute(cell){
+  if(!state.running)return;
+  const p=getPhase();
+  if(cell==='A')state.sA=Math.min(p.maxSolute,state.sA+p.solutePerClick);
+  else state.sB=Math.min(p.maxSolute,state.sB+p.solutePerClick);
+  state.moves++;
+  addScore(5);showScorePop('+5','#00cfff');
+  pulseBtn(cell==='A'?'btnAddA':'btnAddB');
+  dotCacheA=[];dotCacheB=[];lastSA=-1;lastSB=-1;
+  updateDisplay();
+  const cA=state.sA/Math.max(state.wA,0.01),cB=state.sB/Math.max(state.wB,0.01);
+  const which=cell==='A'?cA>cB?'A atrai água agora!':'B ainda mais concentrada.':'B atrai água agora!';
+  setFeedback(`🟡 Soluto adicionado à Célula ${cell} — ${which}`,'good');
+  checkWin();
+}
+
+function removeSolute(cell){
+  if(!state.running)return;
+  const p=getPhase();
+  if(cell==='A')state.sA=Math.max(p.minSolute,state.sA-p.solutePerClick);
+  else state.sB=Math.max(p.minSolute,state.sB-p.solutePerClick);
+  state.moves++;
+  addScore(3);showScorePop('+3','#aaffdd');
+  pulseBtn(cell==='A'?'btnRemA':'btnRemB');
+  dotCacheA=[];dotCacheB=[];lastSA=-1;lastSB=-1;
+  updateDisplay();
+  setFeedback(`◯ Soluto removido da Célula ${cell} — concentração diminuiu.`,'info');
+  checkWin();
+}
+
+function checkWin(){
+  const cA=state.sA/Math.max(state.wA,0.01),cB=state.sB/Math.max(state.wB,0.01);
+  const diff=Math.abs(cA-cB)/Math.max(cA,cB,0.01);
+  const p=getPhase();
+  // Equilibrium indicator
+  const ind=document.getElementById('equilIndicator');
+  if(diff<p.tolerance*1.5){ind.className='equil-indicator close';ind.textContent='🌡️ Quase lá! Equilibrando...';}
+  else{ind.className='equil-indicator far';ind.textContent='⚖️ Alcance o equilíbrio osmótico';}
+  if(diff<=p.tolerance){
+    setTimeout(()=>{
+      const cA2=state.sA/Math.max(state.wA,0.01),cB2=state.sB/Math.max(state.wB,0.01);
+      const d2=Math.abs(cA2-cB2)/Math.max(cA2,cB2,0.01);
+      if(d2<=p.tolerance&&state.running){
+        state.running=false;clearAllIntervals();
+        document.getElementById('equilIndicator').className='equil-indicator done';
+        document.getElementById('equilIndicator').textContent='✅ Equilíbrio osmótico atingido!';
+        phaseWon();
+      }
+    },800);
+  }
+}
+
+function phaseWon(){
+  const p=getPhase();
+  const tf=state.timerLeft/state.timerMax;
+  const moveB=Math.max(0,200-state.moves*10);
+  const timeB=Math.floor(p.scoreBonus*tf);
+  const total=p.scoreBonus+timeB+moveB;
+  addScore(total);
+  document.getElementById('winSub').innerHTML=[
+    `🔬 Equilíbrio osmótico em ${state.moves} ação(ões)`,
+    `⏱ Bônus de velocidade: +${timeB}`,
+    `💫 Bônus de eficiência: +${moveB}`,
+    `🏅 Total da fase: +${total} pts`
+  ].join('<br>');
+  document.getElementById('winScore').textContent='+'+total+' pts';
+  showOverlay('overlayWin');launchParticles('win');
+}
+
+function loseLife(reason){
+  state.lives=Math.max(0,state.lives-1);updateLivesDisplay();
+  document.getElementById('deadSub').textContent=reason+(state.lives>0?` — ${state.lives} vida(s) restante(s).`:'');
+  document.getElementById('deadScore').textContent=state.score+' pts';
+  showOverlay('overlayDead');launchParticles('dead');
+}
+
+function nextLevel(){
+  hideAllOverlays();state.phase++;
+  if(state.phase>=PHASES.length){document.getElementById('finalScore').textContent=state.score+' pts';showOverlay('overlayVictory');launchParticles('victory');return;}
+  const p=getPhase();
+  document.getElementById('levelIcon').textContent=p.icon;
+  document.getElementById('levelTitle').textContent=`FASE ${p.id}: ${p.title}`;
+  document.getElementById('levelSub').innerHTML=p.desc+'<br><br>⏱ '+p.timer+'s &nbsp;|&nbsp; 🟡 '+p.solutePerClick+' soluto/ação';
+  showOverlay('overlayLevel');
+}
+function startLevel(){hideAllOverlays();initPhase();}
+function restartLevel(){hideAllOverlays();clearAllIntervals();initPhase();}
+function restartGame(){hideAllOverlays();clearAllIntervals();state.phase=0;state.score=0;state.lives=3;initPhase();}
+
+function updateDisplay(){
+  const {sA,wA,sB,wB}=state;
+  const cA=sA/Math.max(wA,0.01),cB=sB/Math.max(wB,0.01);
+  const maxC=Math.max(cA,cB,0.01);
+  document.getElementById('soluteCountA').textContent=sA;
+  document.getElementById('soluteCountB').textContent=sB;
+  const hA=Math.min(100,(cA/(maxC*1.1))*100),hB=Math.min(100,(cB/(maxC*1.1))*100);
+  document.getElementById('barA').style.height=hA+'%';
+  document.getElementById('barB').style.height=hB+'%';
+  document.getElementById('barValA').textContent=cA.toFixed(2);
+  document.getElementById('barValB').textContent=cB.toFixed(2);
+  document.getElementById('movesCount').textContent=state.moves;
+}
+
+function addScore(d){state.score=Math.max(0,state.score+d);updateScoreDisplay();}
+function updateScoreDisplay(){document.getElementById('scoreVal').textContent=state.score;}
+function updateLivesDisplay(){const h=state.lives;document.getElementById('livesVal').textContent=(h>=1?'❤️':'🖤')+(h>=2?'❤️':'🖤')+(h>=3?'❤️':'🖤');}
+function setFeedback(msg,type){const el=document.getElementById('feedbackMsg');el.innerHTML=msg;el.className='feedback '+type;}
+function pulseBtn(id){const b=document.getElementById(id);if(!b)return;b.classList.add('pulse');setTimeout(()=>b.classList.remove('pulse'),350);}
+function showScorePop(text,color){const el=document.createElement('div');el.className='score-pop';el.textContent=text;el.style.color=color;el.style.left=(window.innerWidth/2-20)+'px';el.style.top=(window.innerHeight/2-50)+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1100);}
+function showOverlay(id){document.getElementById(id).classList.add('show');}
+function hideAllOverlays(){document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show'));}
+
+/* Particles */
+const pCanvas=document.getElementById('particleCanvas');const pCtx=pCanvas.getContext('2d');
+function resizeP(){pCanvas.width=window.innerWidth;pCanvas.height=window.innerHeight;}resizeP();
+window.addEventListener('resize',resizeP);
+let particles=[];
+function launchParticles(type){
+  particles=[];
+  const count=type==='victory'?120:type==='win'?60:35;
+  for(let i=0;i<count;i++){
+    const colors=type==='dead'?['#ff3d5a','#ff6b81','#dd0000']:type==='win'?['#00cfff','#4dff91','#ffd700','#fff']:['#ffd700','#ff6b35','#4dff91','#00cfff','#ff69b4'];
+    particles.push({x:pCanvas.width/2,y:pCanvas.height/2,vx:(Math.random()-0.5)*(type==='dead'?4:8),vy:(Math.random()-0.5)*(type==='dead'?4:8)-(type==='dead'?0:3),r:Math.random()*5+2,color:colors[Math.floor(Math.random()*colors.length)],life:1,decay:Math.random()*0.015+0.01});
+  }
+  animP();
+}
+function animP(){pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);particles=particles.filter(p=>p.life>0);for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=p.decay;pCtx.globalAlpha=p.life;pCtx.fillStyle=p.color;pCtx.beginPath();pCtx.arc(p.x,p.y,p.r,0,Math.PI*2);pCtx.fill();}pCtx.globalAlpha=1;if(particles.length>0)requestAnimationFrame(animP);else pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);}
+
+/* Boot */
+window.addEventListener('load',()=>{
+  buildDots();
+  document.getElementById('tutorialOverlay').classList.add('show');
+  drawTutCanvases();
+});
+</script>
+</body>
+</html>
